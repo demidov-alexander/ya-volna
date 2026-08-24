@@ -221,3 +221,75 @@ def test_sampling_cap_does_not_break_long_playlists():
     config = config_for(hours=6, selection={"max_candidates_per_step": 10})
     result = build(config=config)
     assert result.total_duration_seconds >= 6 * 3600
+
+
+def mixed_discovery_pools(count: int = 400) -> PoolSet:
+    """Discovery pool split evenly between exploratory and taste-adjacent groups."""
+    familiar = [
+        make_track(
+            f"f{i}",
+            artist=f"fa{i % 40}",
+            album=f"fal{i % 25}",
+            cluster=CLUSTERS[i % len(CLUSTERS)],
+            liked=True,
+        )
+        for i in range(count)
+    ]
+    discovery = []
+    for i in range(count):
+        exploratory = i % 2 == 0
+        discovery.append(
+            make_track(
+                f"d{i}",
+                artist=f"da{i % 45}",
+                album=f"dal{i % 30}",
+                cluster=CLUSTERS[i % len(CLUSTERS)],
+                seed_group="diverse" if exploratory else "cluster:pop",
+            )
+        )
+    return PoolSet(familiar=familiar, discovery=discovery)
+
+
+def exploratory_share(result) -> float:
+    discovery = [e for e in result.entries if e.source_type is SourceType.DISCOVERY]
+    assert discovery
+    odd = sum(1 for e in discovery if e.track.metadata.get("seed_group") == "diverse")
+    return odd / len(discovery)
+
+
+def test_exploratory_share_tracks_the_configured_ratio():
+    """exploratory_ratio_within_discovery is a share of discovery, not a weight."""
+    result = build(config=config_for(), pools=mixed_discovery_pools())
+    assert abs(exploratory_share(result) - 0.25) < 0.08
+
+
+def test_exploratory_share_follows_the_config():
+    high = config_for(
+        mix={
+            "familiar_ratio": 0.65,
+            "discovery_ratio": 0.35,
+            "exploratory_ratio_within_discovery": 0.8,
+        }
+    )
+    low = config_for(
+        mix={
+            "familiar_ratio": 0.65,
+            "discovery_ratio": 0.35,
+            "exploratory_ratio_within_discovery": 0.05,
+        }
+    )
+    high_share = exploratory_share(build(config=high, pools=mixed_discovery_pools()))
+    low_share = exploratory_share(build(config=low, pools=mixed_discovery_pools()))
+    assert high_share > 0.6
+    assert low_share < 0.2
+
+
+def test_taste_adjacent_seed_groups_are_not_crowded_out():
+    """Regression: a constant exploratory bonus starved the per-cluster groups."""
+    result = build(config=config_for(), pools=mixed_discovery_pools())
+    groups = {
+        e.track.metadata.get("seed_group")
+        for e in result.entries
+        if e.source_type is SourceType.DISCOVERY
+    }
+    assert groups == {"diverse", "cluster:pop"}

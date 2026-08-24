@@ -11,6 +11,14 @@ from yavolna.config import AppConfig
 from yavolna.library.models import SourceType, Track
 from yavolna.library.normalization import content_key
 
+#: Seed groups whose candidates count as "exploratory" — deliberately further
+#: from the user's centre of taste (spec section 12.1).
+EXPLORATORY_SEED_GROUPS = frozenset({"underrepresented", "diverse", "old_likes", "personal_wave"})
+
+
+def is_exploratory(track: Track) -> bool:
+    return str(track.metadata.get("seed_group", "")) in EXPLORATORY_SEED_GROUPS
+
 
 class Relaxation(IntEnum):
     """Ordered relaxation steps. Lower is stricter."""
@@ -68,6 +76,7 @@ class SchedulerState:
     total_duration: int = 0
     familiar_count: int = 0
     discovery_count: int = 0
+    exploratory_count: int = 0
     used_track_ids: set[str] = field(default_factory=set)
     # Same recording under a different provider id: two ids, one song. Liked
     # libraries do contain those, and in a playlist they read as a duplicate.
@@ -93,6 +102,8 @@ class SchedulerState:
             self.familiar_count += 1
         else:
             self.discovery_count += 1
+            if is_exploratory(track):
+                self.exploratory_count += 1
         self.total_duration += duration_seconds
         self.position += 1
 

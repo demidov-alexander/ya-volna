@@ -11,7 +11,12 @@ from dataclasses import dataclass, field
 from datetime import datetime
 
 from yavolna.library.models import SourceType, Track
-from yavolna.mixing.constraints import Constraints, SchedulerState, days_between
+from yavolna.mixing.constraints import (
+    Constraints,
+    SchedulerState,
+    days_between,
+    is_exploratory,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -19,7 +24,7 @@ class ScoreWeights:
     base: float = 1.0
     cluster_balance: float = 1.6
     quota_need: float = 1.2
-    exploratory: float = 0.35
+    exploratory: float = 0.6
     track_recency: float = 2.0
     artist_recency: float = 1.5
     album_recency: float = 1.0
@@ -31,10 +36,6 @@ class ScoreWeights:
         if prefer_high_variety:
             return cls()
         return cls(cluster_balance=0.8, cluster_recency=0.6, artist_recency=1.0)
-
-
-#: Seed groups whose candidates count as "exploratory" (spec section 7, mix.*).
-EXPLORATORY_SEED_GROUPS = frozenset({"underrepresented", "diverse", "old_likes", "personal_wave"})
 
 
 @dataclass(slots=True)
@@ -68,7 +69,9 @@ def score_track(
         track, state, context
     )
     components["quota_need"] = weights.quota_need * _quota_deficit(source, state, context)
-    components["exploratory"] = weights.exploratory * _exploratory_bonus(track, source, context)
+    components["exploratory"] = weights.exploratory * _exploratory_signal(
+        track, source, state, context
+    )
 
     components["track_recency"] = -weights.track_recency * _track_recency_penalty(track, context)
     components["artist_recency"] = -weights.artist_recency * _gap_penalty(
@@ -107,13 +110,20 @@ def _quota_deficit(source: SourceType, state: SchedulerState, context: ScoringCo
     return max(-1.0, min(1.0, deficit / 10.0))
 
 
-def _exploratory_bonus(track: Track, source: SourceType, context: ScoringContext) -> float:
+def _exploratory_signal(
+    track: Track, source: SourceType, state: SchedulerState, context: ScoringContext
+) -> float:
+    """Steer the exploratory share of discovery towards its configured ratio.
+
+    A constant bonus for the odd seed groups would let them crowd out the
+    taste-adjacent recommendations entirely, so this is a two-sided quota
+    signal: positive for whichever side is behind its target.
+    """
     if source is not SourceType.DISCOVERY:
         return 0.0
-    seed_group = str(track.metadata.get("seed_group", ""))
-    if seed_group in EXPLORATORY_SEED_GROUPS:
-        return context.exploratory_ratio
-    return 0.0
+    target = context.exploratory_ratio * (state.discovery_count + 1)
+    deficit = max(-1.0, min(1.0, (target - state.exploratory_count) / 5.0))
+    return deficit if is_exploratory(track) else -deficit
 
 
 def _track_recency_penalty(track: Track, context: ScoringContext) -> float:

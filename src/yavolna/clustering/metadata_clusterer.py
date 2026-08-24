@@ -27,6 +27,7 @@ DEFAULT_GENRE_MAP: dict[str, str] = {
     "britishrock": "rock",
     "newwave": "rock",
     "punk": "rock",
+    "folkrock": "rock",
     "postpunk": "rock",
     "grunge": "rock",
     "psychedelic": "rock",
@@ -42,6 +43,8 @@ DEFAULT_GENRE_MAP: dict[str, str] = {
     "metal": "metal",
     "epicmetal": "metal",
     "metalcore": "metal",
+    "gothicmetal": "metal",
+    "alternativemetal": "metal",
     "folkmetal": "metal",
     "numetal": "metal",
     "black": "metal",
@@ -57,6 +60,7 @@ DEFAULT_GENRE_MAP: dict[str, str] = {
     "breakbeat": "electronic",
     "dnb": "electronic",
     "dubstep": "electronic",
+    "bass": "electronic",
     "trip": "electronic",
     "triphop": "electronic",
     "experimental": "electronic",
@@ -69,6 +73,7 @@ DEFAULT_GENRE_MAP: dict[str, str] = {
     "psytrance": "techno",
     "hardstyle": "techno",
     "dance": "dance",
+    "edm": "dance",
     "eurodance": "dance",
     "disco": "dance",
     "edmpop": "dance",
@@ -88,6 +93,7 @@ DEFAULT_GENRE_MAP: dict[str, str] = {
     # pop family
     "pop": "pop",
     "ruspop": "pop",
+    "rusestrada": "pop",
     "foreignpop": "pop",
     "kpop": "pop",
     "jpop": "pop",
@@ -100,11 +106,11 @@ DEFAULT_GENRE_MAP: dict[str, str] = {
     "rusrap": "hiphop",
     "foreignrap": "hiphop",
     "phonk": "hiphop",
-    "phonkgenre": "hiphop",
     "trap": "hiphop",
     "grime": "hiphop",
     # soul / jazz / world
     "jazz": "jazz_soul",
+    "smoothjazz": "jazz_soul",
     "blues": "jazz_soul",
     "soul": "jazz_soul",
     "funk": "jazz_soul",
@@ -113,6 +119,9 @@ DEFAULT_GENRE_MAP: dict[str, str] = {
     "ska": "jazz_soul",
     "dub": "jazz_soul",
     "folk": "folk_world",
+    "eurofolk": "folk_world",
+    "bollywood": "folk_world",
+    "foreignbard": "folk_world",
     "world": "folk_world",
     "country": "folk_world",
     "latinfolk": "folk_world",
@@ -161,7 +170,21 @@ class MetadataClusterer(Clusterer):
 
     def _from_genres(self, track: Track) -> str | None:
         for genre in track.genres:
-            cluster = self._genre_map.get(normalize_genre(genre))
+            cluster = self._lookup(normalize_genre(genre))
             if cluster:
                 return cluster
+        return None
+
+    def _lookup(self, genre: str) -> str | None:
+        """Exact match, then without the trailing "genre" suffix.
+
+        Yandex Music returns several codes in both forms — `phonkgenre`,
+        `edmgenre`, `folkgenre`, `triphopgenre` — so stripping the suffix keeps
+        the map working for codes nobody has enumerated yet.
+        """
+        cluster = self._genre_map.get(genre)
+        if cluster:
+            return cluster
+        if genre.endswith("genre") and len(genre) > len("genre"):
+            return self._genre_map.get(genre[: -len("genre")])
         return None

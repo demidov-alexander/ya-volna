@@ -18,11 +18,18 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- `mix.exploratory_ratio_within_discovery` is now what its name says: a share of the
+  discovery half, steered by a two-sided quota. It used to be a constant score bonus,
+  which let the deliberately odd seed groups crowd out the taste-adjacent
+  recommendations almost entirely (96% of discovery instead of the configured 25%).
+- Genre codes are also looked up without their trailing `genre` suffix, because Yandex
+  Music returns several in both forms (`phonkgenre`, `edmgenre`, `folkgenre`,
+  `triphopgenre`). Added the codes observed in a real library: `edm`, `bass`,
+  `rusestrada`, `gothicmetal`, `alternativemetal`, `eurofolk`, `smoothjazz`,
+  `bollywood`, `foreignbard`, `folkrock`.
 - The same recording liked twice under different provider ids no longer appears twice
   in one generated playlist: the duplicate guard now also compares normalized
   title/artist, not just the track id.
-- Recognise `phonkgenre`, the genre code Yandex Music actually returns for phonk
-  (the map only had `phonk`, so those tracks fell into `other`).
 
 ### Security
 
