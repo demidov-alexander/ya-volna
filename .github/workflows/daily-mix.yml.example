@@ -1,0 +1,42 @@
+# OPTIONAL and DISABLED BY DEFAULT.
+#
+# Running YaVolna in GitHub Actions means:
+#   * your Yandex Music token lives in GitHub Actions Secrets;
+#   * the SQLite anti-repetition history has to be cached between runs, and a cache
+#     miss silently weakens the "do not repeat yesterday" logic.
+# Self-hosting (cron, a systemd timer, or a container on your own machine) is the
+# recommended deployment. If you still want this, rename the file to daily-mix.yml.
+name: Daily mix
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -e .
+
+      - name: Restore generation history
+        uses: actions/cache@v4
+        with:
+          path: data
+          key: yavolna-history-${{ github.run_id }}
+          restore-keys: yavolna-history-
+
+      - name: Generate
+        # The token never appears in this file: it comes from repository secrets.
+        env:
+          YANDEX_MUSIC_TOKEN: ${{ secrets.YANDEX_MUSIC_TOKEN }}
+        run: yavolna generate

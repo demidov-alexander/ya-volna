@@ -1,0 +1,85 @@
+# Behavioural configuration for yavolna.
+# Secrets never belong here — they come from environment variables / .env.
+# Copy this file to config.yaml (config.yaml is gitignored).
+
+playlist:
+  name: "Daily Chaos"
+  description: "Automatically generated mixed-style daily playlist"
+  target_duration_hours: 48
+
+  # How the target playlist is managed across runs:
+  #   replace   - keep one playlist and replace its contents on every run
+  #   daily_new - create a separate playlist per day, with the date in the title
+  mode: "replace"
+
+  # replace mode: reuse a playlist that already has this title instead of
+  # creating a second one with the same name.
+  reuse_existing_playlist: true
+
+  # daily_new mode: title template and date format.
+  # Available placeholders: {name}, {date}
+  daily_name_template: "{name} {date}"
+  date_format: "%Y-%m-%d"
+
+  # daily_new mode: how many generated daily playlists to keep.
+  # 0 disables clean-up (nothing is ever deleted). When > 0, only playlists
+  # that yavolna itself created (tracked in the local database) are removed.
+  keep_daily_playlists: 0
+
+  # Visibility used when a playlist is created: private | public
+  visibility: "private"
+
+mix:
+  familiar_ratio: 0.65
+  discovery_ratio: 0.35
+  exploratory_ratio_within_discovery: 0.25
+
+repetition:
+  track_cooldown_days: 10
+  favorite_track_cooldown_days: 4
+  same_artist_gap_tracks: 20
+  same_album_gap_tracks: 40
+  same_cluster_gap_tracks: 3
+
+history:
+  local_retention_days: 180
+  use_remote_listening_history: true
+
+selection:
+  minimum_liked_tracks: 20
+  random_seed: null
+  prefer_high_variety: true
+  # Fallback duration (seconds) for tracks without duration metadata.
+  fallback_track_duration_seconds: 240
+  # Upper bound of candidates scored per position (keeps long playlists fast).
+  max_candidates_per_step: 400
+
+discovery:
+  # How many independent seed groups are used to request recommendations.
+  seed_groups_max: 8
+  seeds_per_group: 4
+  max_candidates_per_seed: 20
+  # Yandex "My Wave" as an extra discovery source, when available.
+  use_personal_wave: true
+
+clustering:
+  fallback_cluster: "other"
+  # Extend or override the built-in genre -> cluster mapping, e.g.:
+  # genre_map:
+  #   shoegaze: "rock"
+  #   phonk: "hiphop"
+  genre_map: {}
+
+exclusions:
+  blocked_track_ids: []
+  blocked_artist_ids: []
+
+validation:
+  ratio_tolerance: 0.05
+  duration_tolerance: 0.15
+  max_playlist_tracks: 10000
+
+runtime:
+  database_path: "data/yavolna.sqlite3"
+  log_level: "INFO"
+  dry_run_export_dir: "data"

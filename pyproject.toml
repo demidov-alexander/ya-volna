@@ -1,0 +1,74 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ya-volna"
+version = "0.1.0"
+description = "YaVolna — self-hosted generator of long, style-mixing daily playlists for Yandex Music"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { file = "LICENSE" }
+authors = [{ name = "Alexander Demidov" }]
+keywords = ["yandex-music", "playlist", "recommendations", "self-hosted", "cli"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Multimedia :: Sound/Audio",
+]
+dependencies = [
+    "typer>=0.12,<0.20",
+    "pydantic>=2.7,<3",
+    "PyYAML>=6,<7",
+    "python-dotenv>=1,<2",
+    "yandex-music>=2.2,<4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "pytest-cov>=5",
+    "ruff>=0.6",
+    "mypy>=1.11",
+    "types-PyYAML",
+]
+
+[project.urls]
+Homepage = "https://github.com/OWNER/ya-volna"
+Issues = "https://github.com/OWNER/ya-volna/issues"
+
+[project.scripts]
+yavolna = "yavolna.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+yavolna = ["py.typed"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = ["error::DeprecationWarning:yavolna.*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF"]
+# B008: typer.Option(...) defaults are the documented Typer idiom.
+# E501: the formatter owns line length; it cannot split long SQL/help strings.
+ignore = ["B008", "E501"]
+
+[tool.mypy]
+python_version = "3.12"
+packages = ["yavolna"]
+ignore_missing_imports = true
+warn_unused_ignores = true
+disallow_untyped_defs = false

@@ -1,0 +1,14 @@
+# Copy to /etc/systemd/system/yavolna.timer, then:
+#   sudo systemctl enable --now yavolna.timer
+[Unit]
+Description=Run YaVolna once a day
+
+[Timer]
+# 04:00 local time, with a random delay so several hosts do not hit the API together.
+OnCalendar=*-*-* 04:00:00
+RandomizedDelaySec=30m
+Persistent=true
+Unit=yavolna.service
+
+[Install]
+WantedBy=timers.target

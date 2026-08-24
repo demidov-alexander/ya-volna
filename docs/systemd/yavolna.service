@@ -1,0 +1,22 @@
+# Copy to /etc/systemd/system/yavolna.service and adjust User/paths.
+[Unit]
+Description=YaVolna — generate the daily Yandex Music mix
+Documentation=https://github.com/OWNER/ya-volna
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=yavolna
+WorkingDirectory=/opt/ya-volna
+# The token is read from this file, which should be owned by the service user
+# with mode 0600. Never put it on the command line.
+EnvironmentFile=/opt/ya-volna/.env
+ExecStart=/opt/ya-volna/.venv/bin/yavolna generate
+
+# Hardening: the service only needs its own directory.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/ya-volna/data
