@@ -3,9 +3,9 @@
 # Copy this file to config.yaml (config.yaml is gitignored).
 
 playlist:
-  name: "Daily Chaos"
+  name: "YaVolna"
   description: "Automatically generated mixed-style daily playlist"
-  target_duration_hours: 48
+  target_duration_hours: 12
 
   # How the target playlist is managed across runs:
   #   replace   - keep one playlist and replace its contents on every run

@@ -13,6 +13,10 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- Default playlist name is now `YaVolna`, and the default
+  `playlist.target_duration_hours` is 12 rather than 48. A 48 h target needs roughly
+  4,000 liked tracks to fill without exhausting the familiar pool; 12 h is reachable for
+  an ordinary library, and the setting is there for anyone who wants more.
 - CI now tests Python 3.14 alongside 3.12 and 3.13, so the Docker base image can
   track the current Python release.
 

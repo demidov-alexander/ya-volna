@@ -33,9 +33,9 @@ class _Base(BaseModel):
 
 
 class PlaylistConfig(_Base):
-    name: str = "Daily Chaos"
+    name: str = "YaVolna"
     description: str = "Automatically generated mixed-style daily playlist"
-    target_duration_hours: float = Field(default=48.0, gt=0, le=24 * 30)
+    target_duration_hours: float = Field(default=12.0, gt=0, le=24 * 30)
     mode: PlaylistMode = PlaylistMode.REPLACE
     reuse_existing_playlist: bool = True
     daily_name_template: str = "{name} {date}"

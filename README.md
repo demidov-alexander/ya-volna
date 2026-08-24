@@ -1,21 +1,22 @@
 # YaVolna
 
 **Your own daily mix for Yandex Music** — a self-hosted CLI that builds one long playlist
-(48 hours by default) from your liked library plus fresh recommendations, deliberately
-alternating between musical styles instead of sitting in one genre for an hour.
+(12 hours by default, tune it to taste) from your liked library plus fresh
+recommendations, deliberately alternating between musical styles instead of sitting in one
+genre for an hour.
 
 The provider suggests candidates; **YaVolna decides what plays next.**
 
 ```
 $ yavolna generate
-library:           3,842 liked tracks
-candidate pools:   familiar 3,790, discovery 1,214
-selected:          748 tracks (48.1 h of 48.0 h target)
-mix:               familiar 486 (65%), discovery 262 (35%)
-clusters used:     9
-playlist:          'Daily Chaos' (id=1023)
+library:           638 liked tracks
+candidate pools:   familiar 638, discovery 563
+selected:          195 tracks (12.0 h of 12.0 h target)
+mix:               familiar 127 (65%), discovery 68 (35%)
+clusters used:     12
+playlist:          'YaVolna' (id=1023)
 url:               https://music.yandex.ru/users/you/playlists/1023
-runtime:           41.3s
+runtime:           24.2s
 ```
 
 ## Contents
@@ -163,8 +164,8 @@ yavolna --provider fake generate --dry-run
 
 | Mode | Behaviour | Good for |
 | --- | --- | --- |
-| `replace` (default) | One playlist, e.g. `Daily Chaos`. Every run replaces its contents. | A stable link/shortcut you always open. |
-| `daily_new` | A new playlist per day, e.g. `Daily Chaos 2026-08-24`. A second run on the same day replaces that day's playlist. | Keeping an archive of past days. |
+| `replace` (default) | One playlist, e.g. `YaVolna`. Every run replaces its contents. | A stable link/shortcut you always open. |
+| `daily_new` | A new playlist per day, e.g. `YaVolna 2026-08-24`. A second run on the same day replaces that day's playlist. | Keeping an archive of past days. |
 
 ```yaml
 playlist:
@@ -194,9 +195,9 @@ yavolna generate --mode replace
 
 | Key | Default | Meaning |
 | --- | --- | --- |
-| `name` | `Daily Chaos` | Playlist title (base title in `daily_new` mode). |
+| `name` | `YaVolna` | Playlist title (base title in `daily_new` mode). |
 | `description` | … | Description set when the playlist is created. |
-| `target_duration_hours` | `48` | Target length. Selection stops when reached or slightly exceeded. |
+| `target_duration_hours` | `12` | Target length. Selection stops when reached or slightly exceeded. |
 | `mode` | `replace` | `replace` or `daily_new`, see above. |
 | `reuse_existing_playlist` | `true` | Reuse a playlist that already has this title instead of creating another one. |
 | `daily_name_template` | `{name} {date}` | Title template for `daily_new`. Must contain `{date}`. |
@@ -349,7 +350,7 @@ The image runs as a non-root user, bakes in no secrets, and keeps state in the
 | --- | --- |
 | `Authentication failed` / exit code 3 | Re-issue the token and run `yavolna auth-check`. Tokens expire and are invalidated by password changes. |
 | `The provider returned no liked tracks` | The token may belong to a different account than you expect — check `yavolna auth-check`. |
-| Playlist much shorter than the target | The candidate pool ran out; the log says `stopped early`. Lower `target_duration_hours`, or loosen `repetition.*` gaps and cooldowns. |
+| Playlist much shorter than the target | The candidate pool ran out; the log says `stopped early`. Lower `target_duration_hours`, or loosen `repetition.*` gaps and cooldowns. A library of N liked tracks can fill roughly `N × 3.7 min × familiar_ratio⁻¹` of playlist before it has to repeat. |
 | `familiar/discovery ratio deviates` | Discovery returned too few candidates. Raise `discovery.seed_groups_max`, or widen `validation.ratio_tolerance`. |
 | Most tracks land in `other` | Genre metadata is thin for your library. Add mappings under `clustering.genre_map`; `yavolna inspect-clusters` shows what genres arrived. |
 | Yandex Music request failed (exit 4) | The unofficial API changed or is rate-limiting. Retry later, then rerun with `--debug`. |

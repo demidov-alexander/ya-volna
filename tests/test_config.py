@@ -30,7 +30,7 @@ def test_defaults_match_the_documented_policy():
     assert config.repetition.same_artist_gap_tracks == 20
     assert config.repetition.same_album_gap_tracks == 40
     assert config.repetition.same_cluster_gap_tracks == 3
-    assert config.playlist.target_duration_hours == 48
+    assert config.playlist.target_duration_hours == 12
     assert config.playlist.mode is PlaylistMode.REPLACE
 
 
@@ -77,7 +77,7 @@ def test_missing_explicit_config_is_an_error(tmp_path):
 
 def test_missing_default_config_falls_back_to_defaults(monkeypatch, tmp_path):
     monkeypatch.chdir(tmp_path)
-    assert load_config(None).playlist.name == "Daily Chaos"
+    assert load_config(None).playlist.name == "YaVolna"
 
 
 def test_invalid_yaml_is_reported(tmp_path):
@@ -106,18 +106,18 @@ def test_date_format_must_contain_directives(tmp_path):
 
 def test_title_for_depends_on_mode():
     replace = AppConfig().playlist
-    assert replace.title_for("2026-08-24") == "Daily Chaos"
+    assert replace.title_for("2026-08-24") == "YaVolna"
 
     daily = AppConfig.model_validate({"playlist": {"mode": "daily_new"}}).playlist
     label = date(2026, 8, 24).strftime(daily.date_format)
-    assert daily.title_for(label) == "Daily Chaos 2026-08-24"
+    assert daily.title_for(label) == "YaVolna 2026-08-24"
 
 
 def test_custom_daily_template():
     playlist = AppConfig.model_validate(
         {"playlist": {"mode": "daily_new", "daily_name_template": "{date} · {name}"}}
     ).playlist
-    assert playlist.title_for("24.08") == "24.08 · Daily Chaos"
+    assert playlist.title_for("24.08") == "24.08 · YaVolna"
 
 
 def test_log_level_is_validated(tmp_path):

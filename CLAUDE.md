@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project
 
-**YaVolna** (`ya-volna` on GitHub, `yavolna` as the Python package and CLI) — a self-hosted CLI that builds one long (48 h default) style-mixing daily playlist in Yandex Music from liked tracks plus recommendations.
+**YaVolna** (`ya-volna` on GitHub, `yavolna` as the Python package and CLI) — a self-hosted CLI that builds one long (12 h default) style-mixing daily playlist in Yandex Music from liked tracks plus recommendations.
 
 `yandex_daily_mix_spec.md` is the design document. Docstrings reference its section numbers; section 36 was added during implementation and documents the playlist rotation modes. Deviating from the spec on purpose means updating the spec in the same change.
 

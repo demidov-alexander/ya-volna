@@ -1207,3 +1207,20 @@ title lookup, so renaming the playlist in the Yandex Music app does not cause a 
 ### 36.5 CLI
 
 `--mode replace|daily_new` overrides the configured mode for a single run.
+
+---
+
+## 37. Default Policy Deviations
+
+*Recorded during implementation of v0.1.0. The reasoning here matters more than the
+numbers: defaults should work for an ordinary library, not an ideal one.*
+
+Two documented defaults were changed:
+
+| Setting | Spec | Implementation | Why |
+| --- | --- | --- | --- |
+| `playlist.name` | `Daily Chaos` (section 6) | `YaVolna` | The playlist is named after the tool, so a user seeing it in their account knows what produced it. `Daily Chaos` remains a fine choice and is still just a config value. |
+| `playlist.target_duration_hours` | `48` (sections 7 and 29) | `12` | A 48 h target at a 0.65 familiar ratio needs about 31 h of liked music — roughly 500 liked tracks purely for the familiar half, and far more before the anti-repetition cooldowns stop biting on consecutive days. Measured against a 638-track library, a 48 h target exhausts the pool and stops early; 12 h fills exactly and leaves headroom for the next day. |
+
+The 48 h figure is not wrong, it just presumes a large library. Sections 15 and 29 are
+otherwise unchanged, and both values remain plain configuration.
