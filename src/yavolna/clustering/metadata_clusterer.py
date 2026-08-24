@@ -100,6 +100,7 @@ DEFAULT_GENRE_MAP: dict[str, str] = {
     "rusrap": "hiphop",
     "foreignrap": "hiphop",
     "phonk": "hiphop",
+    "phonkgenre": "hiphop",
     "trap": "hiphop",
     "grime": "hiphop",
     # soul / jazz / world

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
 import pytest
@@ -164,3 +165,56 @@ def test_token_is_never_echoed(workspace, monkeypatch):
     )
     assert result.exit_code == 0
     assert "y0_super-secret-token" not in result.output
+
+
+def test_inspect_clusters_names_unmapped_genres(workspace):
+    Path("config.yaml").write_text(
+        "selection:\n  minimum_liked_tracks: 5\nclustering:\n  genre_map: {}\n", encoding="utf-8"
+    )
+    result = runner.invoke(app, ["--provider", "fake", "inspect-clusters"])
+    assert result.exit_code == 0
+    # The fake catalog is fully mapped, so the hint must stay quiet there.
+    assert "unmapped genres" not in result.stdout
+
+    Path("config.yaml").write_text(
+        'selection:\n  minimum_liked_tracks: 5\nclustering:\n  genre_map:\n    rock: "other"\n',
+        encoding="utf-8",
+    )
+    result = runner.invoke(app, ["--provider", "fake", "inspect-clusters"])
+    assert result.exit_code == 0
+    assert "unmapped genres in 'other'" in result.stdout
+    assert "rock" in result.stdout
+
+
+def test_traceback_from_a_crash_is_scrubbed(workspace, capsys, monkeypatch):
+    """A traceback printed by the interpreter must not carry the token (--debug path)."""
+    from yavolna.cli import _install_scrubbing_excepthook
+    from yavolna.logging import REDACTED, redaction_filter
+
+    redaction_filter().add_secret("y0_super-secret-token")
+    _install_scrubbing_excepthook()
+    try:
+        raise RuntimeError("provider said: OAuth y0_super-secret-token rejected")
+    except RuntimeError as exc:
+        sys.excepthook(type(exc), exc, exc.__traceback__)
+
+    captured = capsys.readouterr()
+    assert "y0_super-secret-token" not in captured.err
+    assert REDACTED in captured.err
+    assert "RuntimeError" in captured.err
+
+
+def test_loose_env_permissions_are_reported(workspace, monkeypatch):
+    from yavolna.cli import _warn_on_loose_env_permissions
+
+    env = Path(".env")
+    env.write_text("YANDEX_MUSIC_TOKEN=y0_whatever-token\n", encoding="utf-8")
+    env.chmod(0o644)
+    result = runner.invoke(app, ["validate-config"])
+    assert result.exit_code == 0
+    assert "readable by other users" in result.stderr
+
+    env.chmod(0o600)
+    result = runner.invoke(app, ["validate-config"])
+    assert "readable by other users" not in result.stderr
+    _warn_on_loose_env_permissions(Path("does-not-exist"))  # must not raise

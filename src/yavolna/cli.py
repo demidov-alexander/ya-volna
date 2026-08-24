@@ -2,11 +2,16 @@
 
 from __future__ import annotations
 
+import os
 import sqlite3
+import sys
+import traceback
+from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from types import TracebackType
 from typing import Annotated
 
 import typer
@@ -64,7 +69,39 @@ def _require_secrets() -> Secrets:
     secrets = load_secrets(required=True)
     assert secrets is not None  # load_secrets raises when required and missing
     redaction_filter().add_secret(secrets.yandex_music_token)
+    _warn_on_loose_env_permissions()
     return secrets
+
+
+def _warn_on_loose_env_permissions(path: Path = Path(".env")) -> None:
+    """A token file other local users can read is a leak waiting to happen."""
+    if os.name == "nt" or not path.is_file():
+        return
+    try:
+        mode = path.stat().st_mode & 0o777
+    except OSError:  # pragma: no cover - unreadable stat
+        return
+    if mode & 0o077:
+        typer.secho(
+            f"warning: {path} is readable by other users (mode {mode:03o}). Run: chmod 600 {path}",
+            fg=typer.colors.YELLOW,
+            err=True,
+        )
+
+
+def _install_scrubbing_excepthook() -> None:
+    """Route unexpected tracebacks through the redaction filter.
+
+    Log records are scrubbed by the logging handler, but a traceback printed by
+    the interpreter (``--debug``, or a genuine crash) bypasses logging entirely
+    and may carry a provider exception message. This closes that path.
+    """
+
+    def hook(exc_type: type[BaseException], exc: BaseException, tb: TracebackType | None) -> None:
+        text = "".join(traceback.format_exception(exc))
+        sys.stderr.write(redaction_filter().scrub(text))
+
+    sys.excepthook = hook
 
 
 def _version_callback(value: bool) -> None:
@@ -111,6 +148,7 @@ def main_callback(
     if debug:
         level = "DEBUG"
     setup_logging(level)
+    _install_scrubbing_excepthook()
     if provider not in {"yandex", "fake"}:
         raise typer.BadParameter("--provider must be 'yandex' or 'fake'")
     resolved = config or (DEFAULT_CONFIG_PATH if DEFAULT_CONFIG_PATH.exists() else None)
@@ -230,12 +268,12 @@ def inspect_clusters(
             library = service.load_library()
         finally:
             repository.close()
-        _print_clusters(library, samples)
+        _print_clusters(library, samples, context.config.clustering.fallback_cluster)
 
     _run(context, action)
 
 
-def _print_clusters(library: Library, samples: int) -> None:
+def _print_clusters(library: Library, samples: int, fallback_cluster: str) -> None:
     grouped = library.by_cluster()
     total = len(library) or 1
     for cluster_id, tracks in sorted(grouped.items(), key=lambda item: -len(item[1])):
@@ -244,6 +282,18 @@ def _print_clusters(library: Library, samples: int) -> None:
         for track in tracks[:samples]:
             genres = ", ".join(track.genres) or "no genre metadata"
             typer.echo(f"    {track.describe()}  [{genres}]")
+
+    # The fallback cluster is where unmapped genres pile up; naming them turns
+    # "why is everything in other?" into a concrete clustering.genre_map entry.
+    unmapped = Counter(
+        genre or "(no genre metadata)"
+        for track in grouped.get(fallback_cluster, [])
+        for genre in (track.genres or ("",))
+    )
+    if unmapped:
+        typer.echo(f"\nunmapped genres in {fallback_cluster!r} (add them to clustering.genre_map):")
+        for genre, count in unmapped.most_common(15):
+            typer.echo(f"    {genre:<24} {count:>5} tracks")
 
 
 @app.command("validate-config")
@@ -266,6 +316,8 @@ def validate_config(ctx: typer.Context) -> None:
     )
     if not secrets:
         raise typer.Exit(code=0)
+    redaction_filter().add_secret(secrets.yandex_music_token)
+    _warn_on_loose_env_permissions()
 
 
 @app.command("auth-check")
@@ -349,8 +401,7 @@ def _run(context: Context, action: Callable[[], None]) -> None:
 
 def main() -> None:
     """Entry point. Config/credential failures happen before a command runs."""
-    import sys
-
+    _install_scrubbing_excepthook()
     try:
         app()
     except YaVolnaError as exc:  # pragma: no cover - safety net

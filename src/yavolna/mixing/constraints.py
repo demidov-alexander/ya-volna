@@ -9,6 +9,7 @@ from enum import IntEnum
 
 from yavolna.config import AppConfig
 from yavolna.library.models import SourceType, Track
+from yavolna.library.normalization import content_key
 
 
 class Relaxation(IntEnum):
@@ -68,6 +69,9 @@ class SchedulerState:
     familiar_count: int = 0
     discovery_count: int = 0
     used_track_ids: set[str] = field(default_factory=set)
+    # Same recording under a different provider id: two ids, one song. Liked
+    # libraries do contain those, and in a playlist they read as a duplicate.
+    used_content_keys: set[tuple[str, str]] = field(default_factory=set)
     last_artist_position: dict[str, int] = field(default_factory=dict)
     last_album_position: dict[str, int] = field(default_factory=dict)
     last_cluster_position: dict[str, int] = field(default_factory=dict)
@@ -75,6 +79,9 @@ class SchedulerState:
 
     def observe(self, track: Track, source: SourceType, duration_seconds: int) -> None:
         self.used_track_ids.add(track.provider_track_id)
+        key = content_key(track)
+        if key != ("", ""):
+            self.used_content_keys.add(key)
         for artist_id in track.artist_ids:
             self.last_artist_position[artist_id] = self.position
         if track.album_id:
@@ -114,7 +121,10 @@ def passes_hard_filters(track: Track, state: SchedulerState) -> bool:
     """Filters that are never relaxed, at any level."""
     if not track.available:
         return False
-    return track.provider_track_id not in state.used_track_ids
+    if track.provider_track_id in state.used_track_ids:
+        return False
+    key = content_key(track)
+    return not (key != ("", "") and key in state.used_content_keys)
 
 
 def is_eligible(

@@ -137,3 +137,23 @@ def test_state_tracks_counts_and_duration():
 def test_days_between_is_never_negative():
     assert days_between(NOW + timedelta(days=2), NOW) == 0.0
     assert days_between(NOW - timedelta(days=2), NOW) == pytest.approx(2.0)
+
+
+def test_same_recording_under_two_ids_is_never_repeated():
+    """A liked library can hold one song twice; the playlist must not."""
+    state = state_with([make_track("1", title="No Batidao", artist="a1")])
+    twin = make_track("2", title="No Batidao (Remastered)", artist="a1", album="al2")
+    assert not passes_hard_filters(twin, state)
+    assert not is_eligible(twin, state, Constraints(0, 0, 0, 0, 0), Relaxation.COOLDOWN)
+
+
+def test_content_duplicate_guard_ignores_different_artists():
+    state = state_with([make_track("1", title="Karma", artist="a1")])
+    other = make_track("2", title="Karma", artist="a2", album="al2")
+    assert passes_hard_filters(other, state)
+
+
+def test_tracks_without_usable_metadata_are_not_collapsed():
+    state = state_with([make_track("1", title="", artist="a1")])
+    state.used_content_keys.discard(("", ""))
+    assert passes_hard_filters(make_track("2", title="", artist="a2", album="al2"), state)

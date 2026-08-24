@@ -6,10 +6,29 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Added
+
+- `inspect-clusters` now lists the genres that ended up in the fallback cluster, so
+  filling in `clustering.genre_map` stops being guesswork.
+
 ### Changed
 
 - CI now tests Python 3.14 alongside 3.12 and 3.13, so the Docker base image can
   track the current Python release.
+
+### Fixed
+
+- The same recording liked twice under different provider ids no longer appears twice
+  in one generated playlist: the duplicate guard now also compares normalized
+  title/artist, not just the track id.
+- Recognise `phonkgenre`, the genre code Yandex Music actually returns for phonk
+  (the map only had `phonk`, so those tracks fell into `other`).
+
+### Security
+
+- Tracebacks printed by the interpreter (`--debug`, or a crash) now pass through the
+  secret-redaction filter; previously only log records did.
+- Warn when `.env` is readable by other users.
 
 ## [0.1.0] - 2026-08-24
 
