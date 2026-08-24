@@ -1,7 +1,7 @@
 # Copy to /etc/systemd/system/yavolna.service and adjust User/paths.
 [Unit]
 Description=YaVolna — generate the daily Yandex Music mix
-Documentation=https://github.com/OWNER/ya-volna
+Documentation=https://github.com/demidov-alexander/ya-volna
 After=network-online.target
 Wants=network-online.target
 

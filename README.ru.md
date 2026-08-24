@@ -11,7 +11,7 @@
 ## Установка
 
 ```bash
-git clone https://github.com/OWNER/ya-volna.git
+git clone https://github.com/demidov-alexander/ya-volna.git
 cd ya-volna
 python -m venv .venv
 source .venv/bin/activate

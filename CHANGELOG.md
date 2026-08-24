@@ -32,5 +32,5 @@ First public release: the MVP described in `yandex_daily_mix_spec.md`.
 - Docker image, systemd unit examples, cron documentation, CI, and a test suite that needs
   no Yandex account.
 
-[Unreleased]: https://github.com/OWNER/ya-volna/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/OWNER/ya-volna/releases/tag/v0.1.0
+[Unreleased]: https://github.com/demidov-alexander/ya-volna/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/demidov-alexander/ya-volna/releases/tag/v0.1.0

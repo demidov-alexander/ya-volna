@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
   - name: Security issue
-    url: https://github.com/OWNER/ya-volna/security/advisories/new
+    url: https://github.com/demidov-alexander/ya-volna/security/advisories/new
     about: Please report vulnerabilities privately, not as a public issue.

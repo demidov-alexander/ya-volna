@@ -38,8 +38,8 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/OWNER/ya-volna"
-Issues = "https://github.com/OWNER/ya-volna/issues"
+Homepage = "https://github.com/demidov-alexander/ya-volna"
+Issues = "https://github.com/demidov-alexander/ya-volna/issues"
 
 [project.scripts]
 yavolna = "yavolna.cli:main"
