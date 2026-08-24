@@ -18,5 +18,8 @@ ExecStart=/opt/ya-volna/.venv/bin/yavolna generate
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
+# ProtectHome hides /home from the service. Keep it for an /opt install; set it
+# to false (and point ReadWritePaths at the data directory) when the checkout
+# lives under a home directory, or the service will not see its own files.
 ProtectHome=true
 ReadWritePaths=/opt/ya-volna/data

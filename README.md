@@ -292,6 +292,18 @@ sudo cp docs/systemd/yavolna.* /etc/systemd/system/
 sudo systemctl enable --now yavolna.timer
 ```
 
+Adjust `User`, the paths, and `ProtectHome` for a checkout outside `/opt`.
+
+**WSL** — both cron and systemd timers only fire while the WSL instance is running, and
+WSL does not start on its own. A systemd timer with `Persistent=true` (as shipped) catches
+up on a missed run once WSL comes back, which cron does not; that makes the timer the
+better choice there. For a run that happens whether or not you opened a terminal, drive it
+from Windows Task Scheduler instead:
+
+```
+wsl.exe -d <distro> --cd /path/to/ya-volna -e .venv/bin/yavolna generate
+```
+
 **GitHub Actions** — a disabled-by-default workflow lives in
 [`.github/workflows/daily-mix.yml.example`](.github/workflows/daily-mix.yml.example). It
 is intentionally not active: running it means storing your token in GitHub Actions Secrets
