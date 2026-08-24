@@ -80,7 +80,13 @@ Both `.env` and `config.yaml` are gitignored.
 > like a password, and be aware that using unofficial clients may conflict with the
 > service's terms of use. You do this at your own risk.
 
-You need an OAuth token in `YANDEX_MUSIC_TOKEN`. Two common ways to get one:
+You need an OAuth token in `YANDEX_MUSIC_TOKEN`.
+
+Yandex does not let you register your own OAuth application for Yandex Music, so every
+client — this one included — authorises through the client id of the official Yandex Music
+application. The value below is the one documented by the upstream library in
+[Token obtainment methods](https://ym.marshal.dev/en/main/token.html); YaVolna does not
+invent or ship a client id of its own.
 
 **1. Browser (no extra tools).** Open this URL while logged into your Yandex account:
 
@@ -91,9 +97,11 @@ https://oauth.yandex.ru/authorize?response_type=token&client_id=23cabbbdc6cd418a
 After confirming, the browser is redirected to a URL that contains
 `#access_token=<YOUR_TOKEN>&…`. Copy the value of `access_token`.
 
-**2. Community helpers.** The `yandex-music-api` project documents several extractors
-(browser extensions and small scripts) that read the token from an already logged-in
-session. Use whichever you trust; the token is the same either way.
+**2. Community helpers.** The `yandex-music-api`
+[documentation](https://ym.marshal.dev/en/main/token.html) also lists third-party
+extractors (websites, an Android app, browser extensions) that read the token from an
+already logged-in session, and the library itself supports an OAuth device flow. Use
+whichever you trust; the resulting token is the same.
 
 Put it in `.env`:
 
