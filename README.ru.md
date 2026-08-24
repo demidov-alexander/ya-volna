@@ -30,7 +30,7 @@ cp config.example.yaml config.yaml  # сюда настройки
 Зарегистрировать собственное OAuth-приложение для Яндекс Музыки нельзя, поэтому все
 клиенты (включая этот) авторизуются через `client_id` официального приложения Яндекс
 Музыки. Значение ниже — то, которое указано в документации самой библиотеки:
-[Token obtainment methods](https://ym.marshal.dev/ru/main/token.html). YaVolna не
+[Token obtainment methods](https://ym.marshal.dev/en/main/token.html). YaVolna не
 использует и не поставляет собственный `client_id`.
 
 Откройте в браузере под своим аккаунтом:
