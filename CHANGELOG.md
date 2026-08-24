@@ -6,6 +6,11 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+### Changed
+
+- CI now tests Python 3.14 alongside 3.12 and 3.13, so the Docker base image can
+  track the current Python release.
+
 ## [0.1.0] - 2026-08-24
 
 First public release: the MVP described in `yandex_daily_mix_spec.md`.

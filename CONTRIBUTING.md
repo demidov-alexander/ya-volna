@@ -35,7 +35,8 @@ mypy
 yavolna --provider fake generate --dry-run --duration-hours 2            # offline e2e
 ```
 
-CI runs the same commands on Python 3.12 and 3.13, plus a Docker build.
+CI runs the same commands on Python 3.12, 3.13 and 3.14, plus a Docker build.
+The Docker base image must stay on a version the matrix covers.
 
 ## Layout
 
