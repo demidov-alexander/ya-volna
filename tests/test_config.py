@@ -120,6 +120,30 @@ def test_custom_daily_template():
     assert playlist.title_for("24.08") == "24.08 · YaVolna"
 
 
+def test_exclusions_default_to_music_only():
+    exclusions = AppConfig().exclusions
+    assert exclusions.allowed_content_types == ["music"]
+    assert exclusions.blocked_genres == []
+    assert exclusions.blocked_clusters == []
+
+
+def test_exclusion_labels_are_normalized():
+    config = AppConfig.model_validate(
+        {
+            "exclusions": {
+                "blocked_genres": [" For Children ", "PODCASTS", ""],
+                "blocked_clusters": ["Dance"],
+                "allowed_content_types": ["Music"],
+                "blocked_track_ids": [12345],
+            }
+        }
+    )
+    assert config.exclusions.blocked_genres == ["for children", "podcasts"]
+    assert config.exclusions.blocked_clusters == ["dance"]
+    assert config.exclusions.allowed_content_types == ["music"]
+    assert config.exclusions.blocked_track_ids == ["12345"]
+
+
 def test_log_level_is_validated(tmp_path):
     path = write(tmp_path, 'runtime:\n  log_level: "LOUD"\n')
     with pytest.raises(ConfigurationError, match="log_level"):

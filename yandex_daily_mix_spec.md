@@ -204,6 +204,13 @@ selection:
   random_seed: null
   prefer_high_variety: true
 
+exclusions:
+  allowed_content_types: ["music"]
+  blocked_genres: []
+  blocked_clusters: []
+  blocked_track_ids: []
+  blocked_artist_ids: []
+
 runtime:
   database_path: "data/ydmix.sqlite3"
   log_level: "INFO"
@@ -311,6 +318,7 @@ Track
 - liked
 - explicit
 - available
+- content_type
 - metadata
 ```
 
@@ -339,7 +347,8 @@ The familiar pool consists primarily of tracks already liked by the user.
 A familiar track is eligible if:
 
 - it is available for playback;
-- it is not explicitly excluded by local configuration;
+- it is not excluded by local configuration — by id, content type, genre or cluster
+  (section 38);
 - it is outside its cooldown period, unless cooldown relaxation is necessary to reach the requested playlist duration.
 
 ### 11.2 Familiarity weighting
@@ -396,7 +405,7 @@ Discovery candidates should be excluded if:
 - already selected in the current playlist;
 - recently included in previous generated playlists;
 - unavailable;
-- manually blocked;
+- excluded by local configuration, under the same rules as the familiar pool (section 38);
 - artist repetition constraints make them unsuitable.
 
 ---
@@ -1224,3 +1233,41 @@ Two documented defaults were changed:
 
 The 48 h figure is not wrong, it just presumes a large library. Sections 15 and 29 are
 otherwise unchanged, and both values remain plain configuration.
+
+---
+
+## 38. Category Exclusions
+
+*Added in 0.1.1, from user feedback: a liked library is not necessarily all music, and
+not all of it belongs in a background playlist.*
+
+Exclusions answer four independent questions, and each is configured separately under
+`exclusions`:
+
+| Rule | Question | Source of the value |
+| --- | --- | --- |
+| `blocked_track_ids`, `blocked_artist_ids` | Which specific items? | Provider ids. |
+| `allowed_content_types` | What is this, at all? | Provider content type: `music`, `podcast`, `audiobook`, … |
+| `blocked_genres` | What does the provider call it? | Provider genre codes, listed by `inspect-library`. |
+| `blocked_clusters` | Where did YaVolna put it? | Cluster ids, listed by `inspect-clusters`. |
+
+Rules:
+
+- **The same filter guards both pools.** A category the user excluded must not return
+  through recommendations, so the filter runs over the liked library and over the
+  discovery candidates.
+- **Exclusions are hard filters.** They are never relaxed to reach the target duration;
+  a run stops short instead (section 14.6).
+- **Content types are an allow-list**, defaulting to `["music"]`. Providers invent new
+  non-music types over time — podcast episodes, audiobook chapters, articles — and an
+  allow-list keeps them out without an update. An empty list disables the check.
+- **Genre matching is normalized** the same way clustering normalizes it, including the
+  `…genre` suffix Yandex Music adds to some codes, so `forchildren` and `forchildrengenre`
+  are one rule.
+- **Cluster rules run after clustering**, and the clusterer must not see already-excluded
+  tracks: their genres would otherwise skew the artist-majority back-fill.
+- **Every rule reports what it dropped**, per reason, in the run log.
+
+The default excludes podcasts and audiobooks. This is a deliberate deviation from
+"select from liked tracks": a liked children's podcast is a liked item, but a 12-hour
+music mix is not where it belongs. Users who disagree set `allowed_content_types: []`.

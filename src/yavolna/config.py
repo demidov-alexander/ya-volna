@@ -139,14 +139,32 @@ class ClusteringConfig(_Base):
 
 
 class ExclusionsConfig(_Base):
+    """What must never reach a playlist, whatever the recommendations suggest.
+
+    Four independent questions: which ids, which content types (podcasts and
+    audiobooks are not music), which provider genres, and which of YaVolna's
+    own clusters.
+    """
+
     blocked_track_ids: list[str] = Field(default_factory=list)
     blocked_artist_ids: list[str] = Field(default_factory=list)
+    blocked_genres: list[str] = Field(default_factory=list)
+    blocked_clusters: list[str] = Field(default_factory=list)
+    #: Content types that are kept. An empty list disables the check entirely.
+    allowed_content_types: list[str] = Field(default_factory=lambda: ["music"])
 
     @field_validator("blocked_track_ids", "blocked_artist_ids", mode="before")
     @classmethod
     def _stringify(cls, value: Any) -> Any:
         if isinstance(value, list):
             return [str(item) for item in value]
+        return value
+
+    @field_validator("blocked_genres", "blocked_clusters", "allowed_content_types", mode="before")
+    @classmethod
+    def _normalize_labels(cls, value: Any) -> Any:
+        if isinstance(value, list):
+            return [str(item).strip().casefold() for item in value if str(item).strip()]
         return value
 
 

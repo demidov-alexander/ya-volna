@@ -74,6 +74,26 @@ exclusions:
   blocked_track_ids: []
   blocked_artist_ids: []
 
+  # Content types that are allowed into a playlist. Yandex Music marks podcast
+  # episodes and audiobook chapters as non-music, so the default keeps liked
+  # podcasts (children's shows, talk shows) out of the mix.
+  # Set to [] to disable the check, or add a type to let it back in:
+  #   allowed_content_types: ["music", "podcast"]
+  allowed_content_types: ["music"]
+
+  # Provider genre codes that are never selected, whatever recommends them.
+  # `yavolna inspect-library` lists the codes present in your library, e.g.:
+  # blocked_genres:
+  #   - forchildren
+  #   - podcasts
+  blocked_genres: []
+
+  # YaVolna's own style clusters (see `yavolna inspect-clusters`) to skip
+  # entirely, e.g.:
+  # blocked_clusters:
+  #   - dance
+  blocked_clusters: []
+
 validation:
   ratio_tolerance: 0.05
   duration_tolerance: 0.15

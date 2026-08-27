@@ -125,6 +125,27 @@ def test_inspect_library(workspace):
     assert result.exit_code == 0
     assert "liked tracks:" in result.stdout
     assert "estimated library duration:" in result.stdout
+    assert "top genres" in result.stdout
+
+
+def test_inspect_library_hides_podcasts_from_the_fake_provider(workspace):
+    result = runner.invoke(app, ["--provider", "fake", "inspect-library"])
+    assert result.exit_code == 0
+    assert "forchildren" not in result.stdout
+
+
+def test_inspect_library_keeps_podcasts_when_allowed(workspace, tmp_path):
+    config = tmp_path / "config.yaml"
+    config.write_text("exclusions:\n  allowed_content_types: []\n", encoding="utf-8")
+    result = runner.invoke(app, ["--config", str(config), "--provider", "fake", "inspect-library"])
+    assert result.exit_code == 0
+    assert "forchildren" in result.stdout
+
+
+def test_validate_config_reports_the_exclusions(workspace):
+    result = runner.invoke(app, ["validate-config"])
+    assert result.exit_code == 0
+    assert "exclusions:     content types music" in result.stdout
 
 
 def test_inspect_clusters(workspace):

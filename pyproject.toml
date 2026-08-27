@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ya-volna"
-version = "0.1.0"
+version = "0.1.1"
 description = "YaVolna — self-hosted generator of long, style-mixing daily playlists for Yandex Music"
 readme = "README.md"
 requires-python = ">=3.12"

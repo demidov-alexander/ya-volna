@@ -247,12 +247,40 @@ yavolna generate --mode replace
 | `clustering.genre_map` | `{}` | Extend/override the built-in genre → cluster mapping. |
 | `exclusions.blocked_track_ids` | `[]` | Never select these tracks. |
 | `exclusions.blocked_artist_ids` | `[]` | Never select these artists. |
+| `exclusions.allowed_content_types` | `["music"]` | Content types allowed in; podcasts and audiobooks are out by default. `[]` disables the check. |
+| `exclusions.blocked_genres` | `[]` | Provider genre codes that are never selected. |
+| `exclusions.blocked_clusters` | `[]` | Style clusters that are never selected. |
 | `validation.ratio_tolerance` | `0.05` | Allowed deviation from the familiar/discovery ratio. |
 | `validation.duration_tolerance` | `0.15` | Allowed deviation from the target duration. |
 | `validation.max_playlist_tracks` | `10000` | Hard cap on playlist size. |
 | `runtime.database_path` | `data/yavolna.sqlite3` | Local history database. |
 | `runtime.log_level` | `INFO` | `DEBUG`…`CRITICAL`. |
 | `runtime.dry_run_export_dir` | `data` | Where `--dry-run` writes its JSON. |
+
+### Excluding categories
+
+Liked children's podcasts, an audiobook, a genre you never want in the background —
+all of it is filtered out before selection, in the liked library and in the
+recommendations alike.
+
+```yaml
+exclusions:
+  allowed_content_types: ["music"]   # the default: no podcasts, no audiobooks
+  blocked_genres: ["forchildren"]    # provider genre codes
+  blocked_clusters: ["dance"]        # YaVolna's own style clusters
+```
+
+Three different questions, on purpose:
+
+- **content type** is what the track *is* — Yandex Music marks podcast episodes and
+  audiobook chapters as non-music, and the default keeps them out of a music playlist.
+  Set `allowed_content_types: []` to switch the check off, or list a type to let it in;
+- **genre** is what the provider says the track is. `yavolna inspect-library` prints the
+  genre codes present in your library, which is where the names for this list come from;
+- **cluster** is how YaVolna grouped the track. `yavolna inspect-clusters` prints them.
+
+`yavolna validate-config` shows the exclusions in force, and every run logs how many
+tracks each rule dropped.
 
 ## Commands
 

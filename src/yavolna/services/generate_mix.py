@@ -16,6 +16,7 @@ from typing import Any
 from yavolna.clustering.metadata_clusterer import MetadataClusterer
 from yavolna.config import AppConfig, PlaylistMode
 from yavolna.errors import ConfigurationError, ProviderError
+from yavolna.library.filters import ExclusionFilter
 from yavolna.library.loader import load_library
 from yavolna.library.models import Library, MixResult, Playlist
 from yavolna.logging import get_logger
@@ -164,6 +165,15 @@ class GenerateMixService:
         )
         clusterer = self._clusterer()
         clusterer.assign(discovery)
+        # exclusions.blocked_clusters can only be applied once the candidates
+        # have a cluster id; the metadata rules already ran in discovery.
+        cluster_exclusions = ExclusionFilter(config.exclusions)
+        discovery = cluster_exclusions.apply_clusters(discovery)
+        if cluster_exclusions.excluded:
+            log.info(
+                "Discovery: %d candidates dropped by exclusions.blocked_clusters",
+                cluster_exclusions.excluded,
+            )
 
         report.familiar_pool = len(familiar)
         report.discovery_pool = len(discovery)

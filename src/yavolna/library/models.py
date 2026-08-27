@@ -32,6 +32,8 @@ class Track:
     liked: bool = False
     explicit: bool = False
     available: bool = True
+    #: "music", "podcast", "audiobook", ... — whatever the provider reports.
+    content_type: str = "music"
     metadata: dict[str, Any] = field(default_factory=dict)
     # Runtime annotation, assigned by the clusterer.
     cluster_id: str | None = None

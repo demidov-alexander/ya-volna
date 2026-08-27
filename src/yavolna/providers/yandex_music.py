@@ -395,6 +395,7 @@ class YandexMusicProvider(MusicProvider):
             liked=liked,
             explicit=bool(getattr(raw, "explicit", False) or getattr(raw, "content_warning", None)),
             available=bool(getattr(raw, "available", True)),
+            content_type=_content_type(raw, album),
             metadata={},
         )
 
@@ -436,6 +437,34 @@ class YandexMusicProvider(MusicProvider):
 def _chunks(items: list[Any], size: int) -> Iterable[list[Any]]:
     for start in range(0, len(items), size):
         yield items[start : start + size]
+
+
+#: Yandex reports the same thing under several names; normalize to one word.
+_CONTENT_TYPE_ALIASES: dict[str, str] = {
+    "podcast-episode": "podcast",
+    "podcast": "podcast",
+    "audiobook": "audiobook",
+    "audiobook-part": "audiobook",
+    "fairy-tale": "audiobook",
+    "article": "article",
+    "music": "music",
+}
+
+
+def _content_type(raw: Any, album: Any) -> str:
+    """Music, podcast episode, audiobook chapter, ...
+
+    Yandex marks non-music both on the track (`type`) and on its album
+    (`meta_type`), and not always on both, so any non-music marker wins.
+    """
+    for value in (getattr(raw, "type", None), getattr(album, "meta_type", None)):
+        if not value:
+            continue
+        key = str(value).strip().casefold()
+        normalized = _CONTENT_TYPE_ALIASES.get(key, key)
+        if normalized != "music":
+            return normalized
+    return "music"
 
 
 def _first_year(album: Any) -> int | None:

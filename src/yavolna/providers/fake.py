@@ -39,6 +39,7 @@ class FakeMusicProvider(MusicProvider):
         *,
         liked_count: int = 240,
         catalog_count: int = 900,
+        podcast_count: int = 0,
         seed: int = 20260824,
         supports_history: bool = True,
         supports_delete: bool = True,
@@ -54,6 +55,7 @@ class FakeMusicProvider(MusicProvider):
         self._next_playlist_id = 1000
 
         self._build_catalog(liked_count=liked_count, catalog_count=catalog_count)
+        self._build_non_music(podcast_count)
 
     # -- catalog construction -------------------------------------------------
 
@@ -86,6 +88,33 @@ class FakeMusicProvider(MusicProvider):
                 )
             )
         self._liked_ids = {t.provider_track_id for t in self._catalog if t.liked}
+
+    def _build_non_music(self, count: int) -> None:
+        """Liked non-music entries — the kids' podcasts users ask to filter out.
+
+        Appended after the music catalog and built without the rng, so the
+        synthetic library stays byte-identical when count is 0.
+        """
+        for index in range(1, count + 1):
+            self._catalog.append(
+                Track(
+                    provider=PROVIDER_NAME,
+                    provider_track_id=f"p{index}",
+                    title=f"Kids Podcast Episode {index}",
+                    artist_ids=("podcaster1",),
+                    artist_names=("Kids Podcast",),
+                    album_id="palbum1",
+                    album_title="Kids Podcast",
+                    duration_seconds=900,
+                    genres=("forchildren",),
+                    release_year=2026,
+                    liked=True,
+                    available=True,
+                    content_type="podcast",
+                    metadata={"source": "fake"},
+                )
+            )
+            self._liked_ids.add(f"p{index}")
 
     # -- provider interface ---------------------------------------------------
 

@@ -136,6 +136,7 @@ def test_liked_tracks_are_normalized_and_batched():
     assert result[0].duration_seconds == 210
     assert result[0].genres == ("rock",)
     assert result[0].release_year == 2001
+    assert result[0].content_type == "music"
     assert result[0].metadata["liked_at"].startswith("2026-01-02")
     assert fetched == [["1", "2", "3"]]
 
@@ -153,6 +154,27 @@ def test_artist_genres_extend_the_album_genre():
     )
     result = provider.get_liked_tracks()
     assert result[0].genres == ("rock", "rusrock", "punk")
+
+
+@pytest.mark.parametrize(
+    ("track_type", "meta_type", "expected"),
+    [
+        ("podcast-episode", None, "podcast"),
+        ("music", "podcast", "podcast"),
+        (None, "audiobook", "audiobook"),
+        ("music", "music", "music"),
+        (None, None, "music"),
+    ],
+)
+def test_content_type_covers_track_and_album_markers(track_type, meta_type, expected):
+    raw = raw_track()
+    raw.type = track_type
+    raw.albums = [
+        SimpleNamespace(id="10", title="Album", genre="rock", year=2001, meta_type=meta_type)
+    ]
+    provider, _ = provider_with()
+    track = provider._to_track(raw, liked=True)
+    assert track.content_type == expected
 
 
 def test_album_hint_fills_a_missing_album_id():

@@ -60,6 +60,22 @@ def test_blocked_tracks_and_artists_are_excluded(small_library):
     assert [t.provider_track_id for t in kept] == ["fine"]
 
 
+def test_non_music_candidates_are_excluded(small_library):
+    podcast = make_track("cast1", genres=("forchildren",))
+    podcast.content_type = "podcast"
+    kept = filter_discovery_candidates(
+        [podcast, make_track("new1")], library=small_library, config=AppConfig()
+    )
+    assert [t.provider_track_id for t in kept] == ["new1"]
+
+
+def test_blocked_genres_are_excluded(small_library):
+    config = AppConfig.model_validate({"exclusions": {"blocked_genres": ["forchildren"]}})
+    candidates = [make_track("kids", genres=("forchildren",)), make_track("new1")]
+    kept = filter_discovery_candidates(candidates, library=small_library, config=config)
+    assert [t.provider_track_id for t in kept] == ["new1"]
+
+
 def test_recently_generated_candidates_are_excluded(small_library):
     kept = filter_discovery_candidates(
         [make_track("new1"), make_track("new2")],

@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 from yavolna.config import AppConfig
+from yavolna.library.filters import ExclusionFilter
 from yavolna.library.models import Library, Track
 from yavolna.library.normalization import content_key, dedupe_tracks
 from yavolna.logging import get_logger
@@ -79,8 +80,7 @@ def filter_discovery_candidates(
     """Apply the discovery exclusion rules from spec section 12.3."""
     liked_ids = library.track_ids
     liked_content = {content_key(track) for track in library.tracks}
-    blocked_tracks = set(config.exclusions.blocked_track_ids)
-    blocked_artists = set(config.exclusions.blocked_artist_ids)
+    exclusions = ExclusionFilter(config.exclusions)
     recent = recently_generated or set()
 
     kept: list[Track] = []
@@ -91,13 +91,17 @@ def filter_discovery_candidates(
             continue
         if not track.available:
             continue
-        if track.provider_track_id in blocked_tracks:
-            continue
-        if blocked_artists.intersection(track.artist_ids):
+        if exclusions.reject(track) is not None:
             continue
         if track.provider_track_id in recent:
             continue
         track.liked = False
         kept.append(track)
 
+    if exclusions.excluded:
+        log.info(
+            "Discovery: %d candidates dropped by exclusions [%s]",
+            exclusions.excluded,
+            exclusions.describe_counts(),
+        )
     return dedupe_tracks(kept, by_content=True)

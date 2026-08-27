@@ -58,7 +58,8 @@ class Context:
     def build_provider(self) -> MusicProvider:
         if self.provider_name == "fake":
             log.warning("Using the built-in fake provider: nothing will touch Yandex Music")
-            return FakeMusicProvider()
+            # A handful of podcast episodes, so exclusions can be tried offline.
+            return FakeMusicProvider(podcast_count=12)
         secrets = _require_secrets()
         from yavolna.providers.yandex_music import YandexMusicProvider
 
@@ -246,8 +247,23 @@ def inspect_library(ctx: typer.Context) -> None:
         typer.echo(f"tracks without duration:    {stats['tracks_without_duration']:,}")
         hours = stats["estimated_duration_seconds"] / 3600
         typer.echo(f"estimated library duration: {hours:,.1f} h")
+        _print_genres(library)
 
     _run(context, action)
+
+
+def _print_genres(library: Library, limit: int = 15) -> None:
+    """List the genre codes present, so exclusions.blocked_genres can name them.
+
+    The library is already filtered, so anything blocked is absent by design:
+    this is the menu of what is still in, not of what was dropped.
+    """
+    genres = Counter(genre for track in library.tracks for genre in track.genres)
+    if not genres:
+        return
+    typer.echo("\ntop genres (block any of them with exclusions.blocked_genres):")
+    for genre, count in genres.most_common(limit):
+        typer.echo(f"    {genre:<24} {count:>5} tracks")
 
 
 @app.command("inspect-clusters")
@@ -309,6 +325,7 @@ def validate_config(ctx: typer.Context) -> None:
         f"mix:            familiar {config.mix.familiar_ratio:.2f} / "
         f"discovery {config.mix.discovery_ratio:.2f}"
     )
+    typer.echo(f"exclusions:     {_describe_exclusions(config)}")
     typer.echo(f"database:       {config.runtime.database_path}")
     secrets = load_secrets(required=False)
     typer.echo(
@@ -318,6 +335,22 @@ def validate_config(ctx: typer.Context) -> None:
         raise typer.Exit(code=0)
     redaction_filter().add_secret(secrets.yandex_music_token)
     _warn_on_loose_env_permissions()
+
+
+def _describe_exclusions(config: AppConfig) -> str:
+    exclusions = config.exclusions
+    parts = []
+    allowed = exclusions.allowed_content_types
+    parts.append(f"content types {', '.join(allowed)}" if allowed else "any content type")
+    for label, values in (
+        ("genres", exclusions.blocked_genres),
+        ("clusters", exclusions.blocked_clusters),
+        ("tracks", exclusions.blocked_track_ids),
+        ("artists", exclusions.blocked_artist_ids),
+    ):
+        if values:
+            parts.append(f"{len(values)} blocked {label}")
+    return "; ".join(parts)
 
 
 @app.command("auth-check")
